@@ -30,8 +30,6 @@ public class Ratings {
     
     @DBRef
     private UserEntity user;
-    
-    @DBRef
-    private Restaurants restaurants;
+
 
 }

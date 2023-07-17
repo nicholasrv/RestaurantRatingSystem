@@ -56,4 +56,8 @@ public class RestaurantServiceImpl implements RestaurantRatingSystem<Restaurants
     public boolean existsRestaurantByName(String name){
         return restaurantsRepository.existsByName(name);
     }
+
+    public boolean existsRestaurantById(String id){
+        return restaurantsRepository.existsById(id);
+    }
 }

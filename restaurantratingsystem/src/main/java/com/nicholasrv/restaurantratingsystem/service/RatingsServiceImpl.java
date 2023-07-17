@@ -3,6 +3,7 @@ package com.nicholasrv.restaurantratingsystem.service;
 import com.mongodb.MongoException;
 import com.nicholasrv.restaurantratingsystem.RestaurantRatingSystem;
 import com.nicholasrv.restaurantratingsystem.model.Ratings;
+import com.nicholasrv.restaurantratingsystem.model.Restaurants;
 import com.nicholasrv.restaurantratingsystem.repository.RatingsRepository;
 import org.springframework.stereotype.Service;
 
@@ -54,5 +55,8 @@ public class RatingsServiceImpl implements RestaurantRatingSystem<Ratings> {
         return false;
     }
 
+    public List<Ratings> findRatingsByRestaurant(Restaurants restaurants){
+        return ratingsRepository.findRatingsByRestaurant(restaurants);
+    }
 
 }
