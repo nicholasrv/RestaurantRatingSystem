@@ -1,28 +1,34 @@
 package com.nicholasrv.restaurantratingsystem.controller;
 
+import com.nicholasrv.restaurantratingsystem.dto.RatingsDTO;
 import com.nicholasrv.restaurantratingsystem.exceptions.BadRequestException;
 import com.nicholasrv.restaurantratingsystem.model.Ratings;
 import com.nicholasrv.restaurantratingsystem.model.Restaurants;
+import com.nicholasrv.restaurantratingsystem.model.UserEntity;
+import com.nicholasrv.restaurantratingsystem.repository.UserRepository;
 import com.nicholasrv.restaurantratingsystem.service.RatingsServiceImpl;
 import com.nicholasrv.restaurantratingsystem.service.RestaurantServiceImpl;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/ratings")
 public class RatingsController {
+
     @Autowired
     RatingsServiceImpl ratingsService;
 
     @Autowired
     RestaurantServiceImpl restaurantService;
+
+    @Autowired
+    UserRepository userRepository;
 
     @GetMapping("/all")
     public ResponseEntity<?> getAllRatings() throws BadRequestException {
@@ -31,11 +37,11 @@ public class RatingsController {
             if (!ratings.isEmpty()){
                 return new ResponseEntity<List<Ratings>>(ratings, HttpStatus.OK);
             } else {
-                return new ResponseEntity<>("No restaurants could be found.", HttpStatus.NOT_FOUND);
+                return new ResponseEntity<>("No ratings could be found.", HttpStatus.NOT_FOUND);
             }
         } catch(Exception e) {
             e.printStackTrace();
-            throw new BadRequestException("An internal error has occurred  while trying to retrieve these restaurants. Please contact our support team for further information.");
+            throw new BadRequestException("An internal error has occurred  while trying to retrieve the ratings. Please contact our support team for further information.");
         }
     }
 
@@ -64,5 +70,57 @@ public class RatingsController {
         return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
 
     }
+
+    @PostMapping("/{restaurantId}/ratings")
+    public ResponseEntity<?> postRating(@PathVariable String restaurantId, @RequestBody RatingsDTO ratingsDTO) {
+
+        // Gets both the user and restaurant
+        UserEntity user = userRepository.findById(ratingsDTO.getUserId()).orElse(null);
+        Restaurants restaurant = restaurantService.searchById(ratingsDTO.getRestaurantId()).orElse(null);
+        if(restaurant == null) {
+            return new ResponseEntity<>("Restaurant not found on the database", HttpStatus.NOT_FOUND);
+        }
+
+        //Creates a new Rating instance and sets all it's attributes
+        Ratings newRating = new Ratings();
+
+        newRating.setScore(ratingsDTO.getScore());
+        newRating.setComment(ratingsDTO.getComment());
+        newRating.setUser(user);
+        newRating.setTimestamp(LocalDateTime.now());
+
+        restaurant.getRatings().add(newRating);
+
+        // saves the rating on the database + updates the restaurant object with the incremented list
+        ratingsService.save(newRating);
+        restaurantService.save(restaurant);
+
+        return new ResponseEntity<>("Rating successfully created!", HttpStatus.CREATED);
+    }
+
+    @PutMapping("/update")
+    public ResponseEntity updateRating(@PathVariable("id") String id, @RequestBody RatingsDTO ratingsDTO) throws BadRequestException {
+        try {
+            Optional<Ratings> idRating = ratingsService.searchById(id);
+            if (idRating.isPresent()){
+                Ratings ratingToBeUpdated = idRating.get();
+                ratingToBeUpdated.setComment(ratingsDTO.getComment() != null ? ratingsDTO.getComment() : ratingToBeUpdated.getComment());
+                ratingToBeUpdated.setScore(ratingsDTO.getScore() != 0 ? ratingsDTO.getScore() : ratingToBeUpdated.getScore());
+                ratingToBeUpdated.setTimestamp(LocalDateTime.now());
+                ratingsService.update(ratingToBeUpdated);
+                return new ResponseEntity<>(ratingToBeUpdated, HttpStatus.OK);
+            } else {
+                return new ResponseEntity<>("No rating was found with id " + id, HttpStatus.NOT_FOUND);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw new BadRequestException("An internal error has occurred while trying to retrieve this rating. Please contact our support team for further information.");
+        }
+    }
+
+
+
+
+
 
 }

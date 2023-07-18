@@ -40,7 +40,11 @@ public class RestaurantController {
     @PostMapping("/new")
     public ResponseEntity<?> saveNewRestaurant(@RequestBody RestaurantDTO restaurantDTO) throws BadRequestException {
         try {
-            Restaurants restaurants = new Restaurants(restaurantDTO.getName(), restaurantDTO.getLocation(), restaurantDTO.getCuisine());
+            Restaurants restaurants = new Restaurants();
+            restaurants.setName(restaurants.getName());
+            restaurants.setLocation(restaurantDTO.getLocation());
+            restaurants.setCuisine(restaurantDTO.getCuisine());
+
             boolean doesThisRestaurantExist = restaurantService.existsRestaurantByName(restaurants.getName());
             if (doesThisRestaurantExist){
                 return ResponseEntity.badRequest().body("This restaurant is already registered on our database.");
