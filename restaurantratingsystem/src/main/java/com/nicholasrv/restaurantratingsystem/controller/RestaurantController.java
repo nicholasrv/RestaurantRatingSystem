@@ -2,7 +2,6 @@ package com.nicholasrv.restaurantratingsystem.controller;
 
 import com.nicholasrv.restaurantratingsystem.dto.RestaurantDTO;
 import com.nicholasrv.restaurantratingsystem.exceptions.BadRequestException;
-import com.nicholasrv.restaurantratingsystem.exceptions.ResourceNotFoundException;
 import com.nicholasrv.restaurantratingsystem.model.Restaurants;
 import com.nicholasrv.restaurantratingsystem.service.RestaurantServiceImpl;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -56,7 +55,7 @@ public class RestaurantController {
         }
     }
 
-    @PutMapping("/update")
+    @PutMapping("{id}/update")
     public ResponseEntity updateRestaurantDetails(@PathVariable("id") String id, @RequestBody RestaurantDTO restaurantDTO) throws BadRequestException {
         try {
         Optional<Restaurants> idRestaurant = restaurantService.searchById(id);
@@ -87,15 +86,13 @@ public class RestaurantController {
     }
 
     @DeleteMapping("{id}")
-    public ResponseEntity<?> deleteRestaurantById(@PathVariable("id") String id) throws BadRequestException, ResourceNotFoundException {
+    public ResponseEntity<?> deleteRestaurantById(@PathVariable("id") String id) throws BadRequestException {
         try{
             boolean haveItDeleted = restaurantService.delete(id);
             if(haveItDeleted){
                 return new ResponseEntity<>("The restaurant with id " + id + "has been successfully deleted from the database.", HttpStatus.OK);
             }
-            else{
-                throw new ResourceNotFoundException("The restaurant with id " + id + "hasn't been found on the database.");
-            }
+            return new ResponseEntity<>("The restaurant with id" + id + "hasn't been found on the database.", HttpStatus.NOT_FOUND);
         }
         catch (Exception e) {
             throw new BadRequestException("An internal error has occurred  while trying to delete this restaurant. Please contact our support team for further information.");

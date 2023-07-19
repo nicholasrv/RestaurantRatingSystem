@@ -33,13 +33,13 @@ public class RatingsController {
     @GetMapping("/all")
     public ResponseEntity<?> getAllRatings() throws BadRequestException {
         List<Ratings> ratings = ratingsService.getAllResults();
-        try{
-            if (!ratings.isEmpty()){
+        try {
+            if (!ratings.isEmpty()) {
                 return new ResponseEntity<List<Ratings>>(ratings, HttpStatus.OK);
             } else {
                 return new ResponseEntity<>("No ratings could be found.", HttpStatus.NOT_FOUND);
             }
-        } catch(Exception e) {
+        } catch (Exception e) {
             e.printStackTrace();
             throw new BadRequestException("An internal error has occurred  while trying to retrieve the ratings. Please contact our support team for further information.");
         }
@@ -52,12 +52,12 @@ public class RatingsController {
         boolean doesThisRestaurantExist = restaurantService.existsRestaurantById(restaurantId);
 
         // if the restaurant exists, searches for it + gets its id and returns all its related ratings
-        if(doesThisRestaurantExist){
+        if (doesThisRestaurantExist) {
 
             Restaurants restaurant = restaurantService.searchById(restaurantId).orElse(null);
 
             // If the search returns null returns the 404 response status
-            if(restaurant == null)  {
+            if (restaurant == null) {
                 return new ResponseEntity<>(HttpStatus.NOT_FOUND);
             }
 
@@ -77,7 +77,7 @@ public class RatingsController {
         // Gets both the user and restaurant
         UserEntity user = userRepository.findById(ratingsDTO.getUserId()).orElse(null);
         Restaurants restaurant = restaurantService.searchById(ratingsDTO.getRestaurantId()).orElse(null);
-        if(restaurant == null) {
+        if (restaurant == null) {
             return new ResponseEntity<>("Restaurant not found on the database", HttpStatus.NOT_FOUND);
         }
 
@@ -98,11 +98,11 @@ public class RatingsController {
         return new ResponseEntity<>("Rating successfully created!", HttpStatus.CREATED);
     }
 
-    @PutMapping("/update")
+    @PutMapping("{id}/update")
     public ResponseEntity updateRating(@PathVariable("id") String id, @RequestBody RatingsDTO ratingsDTO) throws BadRequestException {
         try {
             Optional<Ratings> idRating = ratingsService.searchById(id);
-            if (idRating.isPresent()){
+            if (idRating.isPresent()) {
                 Ratings ratingToBeUpdated = idRating.get();
                 ratingToBeUpdated.setComment(ratingsDTO.getComment() != null ? ratingsDTO.getComment() : ratingToBeUpdated.getComment());
                 ratingToBeUpdated.setScore(ratingsDTO.getScore() != 0 ? ratingsDTO.getScore() : ratingToBeUpdated.getScore());
@@ -118,9 +118,31 @@ public class RatingsController {
         }
     }
 
+    @DeleteMapping("{id}")
+    public ResponseEntity<?> deleteRatingById(@PathVariable("id") String id) throws BadRequestException {
+        try {
+            boolean haveItDeleted = ratingsService.delete(id);
+            if (haveItDeleted) {
+                return new ResponseEntity<>("The rating with id " + id + "has been successfully deleted from the database.", HttpStatus.OK);
+            }
+            return new ResponseEntity<>("The rating with id" + id + "hasn't been found on the database.", HttpStatus.NOT_FOUND);
+        } catch (Exception e) {
+            throw new BadRequestException("An internal error has occurred while trying to delete this rating. Please contact our support team for further information.");
+        }
+    }
 
+    @GetMapping("/top-rated-restaurants")
+    public ResponseEntity<List<Restaurants>> getTopRatedRestaurants() {
+        List<Restaurants> restaurants = restaurantService.getAllResults();
 
+        restaurants.sort((r1, r2) -> Double.compare(ratingsService.calculateAverageRating(r2), ratingsService.calculateAverageRating(r1)));
 
+        if (restaurants.isEmpty()) {
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        } else {
+            return new ResponseEntity<>(restaurants, HttpStatus.OK);
+        }
+    }
 
 
 }

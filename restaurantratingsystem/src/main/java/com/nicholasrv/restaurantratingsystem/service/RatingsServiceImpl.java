@@ -59,4 +59,18 @@ public class RatingsServiceImpl implements RestaurantRatingSystem<Ratings> {
         return ratingsRepository.findRatingsByRestaurant(restaurants);
     }
 
+    public double calculateAverageRating(Restaurants restaurant) {
+        if (restaurant.getRatings() == null || restaurant.getRatings().isEmpty()) {
+            return 0.0;
+        }
+
+        int totalScore = 0;
+        for (Ratings rating : restaurant.getRatings()) {
+            totalScore += rating.getScore();
+        }
+
+        return (double) totalScore / restaurant.getRatings().size();
+    }
+
+
 }
