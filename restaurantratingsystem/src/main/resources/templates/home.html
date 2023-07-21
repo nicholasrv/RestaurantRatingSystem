@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8">
+  <title>Restaurant Rating System</title>
+  <link rel="stylesheet" href="/static/css/styles.css">
+</head>
+<body>
+<header>
+  <h1>Restaurant Rating System</h1>
+  <p>Explore the best restaurants in town!</p>
+</header>
+
+<section class="container">
+  <div th:each="restaurant : ${restaurants}" class="card">
+    <h2 th:text="${restaurant.name}">Restaurant Name</h2>
+    <img th:src="@{/static/images/} + ${restaurant.image}" alt="Restaurant Image">
+    <p th:text="${restaurant.description}">Description of the restaurant.</p>
+    <p>Rating: <span th:text="${restaurant.rating}">0.0</span></p>
+    <a th:href="@{/restaurants/{id}(id=${restaurant.id})}">View Details</a>
+  </div>
+</section>
+
+<section class="carousel-container">
+  <div class="carousel">
+    <img src="/static/images/burger-resized.jpeg" alt="Slide 1" class="active">
+    <img src="/static/images/chinese-resized.jpeg" alt="Slide 2">
+    <img src="/static/images/feijoada-resized.jpg" alt="Slide 3">
+  </div>
+  <div class="carousel-controls">
+    <div class="carousel-control active"></div>
+    <div class="carousel-control"></div>
+    <div class="carousel-control"></div>
+  </div>
+</section>
+
+<footer>
+  <p>Contact: nicholasrv@live.com</p>
+</footer>
+
+</body>
+</html>

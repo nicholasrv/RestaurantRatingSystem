@@ -39,8 +39,8 @@ public class SecurityConfig extends WebSecurityConfiguration {
                 .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                 .and()
                 .authorizeRequests()
-                .antMatchers("/api/auth/login", "/api/auth/register").permitAll()
-                .antMatchers("/api/restaurants/delete", "/api/restaurants/new","/api/auth/register/admin").hasAuthority("ADMIN")
+                .antMatchers("/api/auth/login", "/api/auth/register", "/").permitAll()
+//                .antMatchers("/api/restaurants/delete", "/api/restaurants/new").hasAuthority("ADMIN")
                 .anyRequest().authenticated()
                 .and()
                 .httpBasic();

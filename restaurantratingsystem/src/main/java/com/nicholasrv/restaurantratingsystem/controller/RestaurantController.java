@@ -1,14 +1,21 @@
 package com.nicholasrv.restaurantratingsystem.controller;
 
+import com.nicholasrv.restaurantratingsystem.dto.RatingsDTO;
 import com.nicholasrv.restaurantratingsystem.dto.RestaurantDTO;
 import com.nicholasrv.restaurantratingsystem.exceptions.BadRequestException;
+import com.nicholasrv.restaurantratingsystem.model.Ratings;
 import com.nicholasrv.restaurantratingsystem.model.Restaurants;
+import com.nicholasrv.restaurantratingsystem.model.UserEntity;
+import com.nicholasrv.restaurantratingsystem.repository.UserRepository;
+import com.nicholasrv.restaurantratingsystem.service.RatingsServiceImpl;
 import com.nicholasrv.restaurantratingsystem.service.RestaurantServiceImpl;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -18,6 +25,56 @@ public class RestaurantController {
 
     @Autowired
     private RestaurantServiceImpl restaurantService;
+
+    @Autowired
+    private UserRepository userRepository;
+
+    @Autowired
+    private RatingsServiceImpl ratingsService;
+
+    @GetMapping("/restaurants/{id}")
+    public String getRestaurantDetails(@PathVariable String id, Model model) {
+        Optional<Restaurants> restaurant = restaurantService.searchById(id);
+        if (restaurant.isPresent()) {
+            model.addAttribute("restaurant", restaurant.get());
+            return "restaurant-details";
+        } else {
+            return "error-page";
+        }
+    }
+
+    @GetMapping("/restaurants/{id}/ratings")
+    public String getRatingForm(@PathVariable String id, Model model) {
+        RatingsDTO ratingsDTO = new RatingsDTO();
+        ratingsDTO.setRestaurantId(id);
+        model.addAttribute("ratingsDTO", ratingsDTO);
+        return "rating-form";
+    }
+
+    @PostMapping("/restaurants/{id}/ratings")
+    public String postRating(@PathVariable String id, @ModelAttribute RatingsDTO ratingsDTO, Model model) {
+        Restaurants restaurant = restaurantService.searchById(ratingsDTO.getRestaurantId()).orElse(null);
+        if (restaurant == null) {
+            return "error-page";
+        }
+
+        UserEntity user = userRepository.findById(ratingsDTO.getUserId()).orElse(null);
+        if (user == null) {
+            return "error-page";
+        }
+
+        Ratings newRating = new Ratings();
+        newRating.setScore(ratingsDTO.getScore());
+        newRating.setComment(ratingsDTO.getComment());
+        newRating.setUser(user);
+        newRating.setTimestamp(LocalDateTime.now());
+
+        restaurant.getRatings().add(newRating);
+        ratingsService.save(newRating);
+        restaurantService.save(restaurant);
+
+        return "redirect:/restaurants/" + id;
+    }
 
 
     @GetMapping("/all")
@@ -35,12 +92,11 @@ public class RestaurantController {
         }
     }
 
-
     @PostMapping("/new")
     public ResponseEntity<?> saveNewRestaurant(@RequestBody RestaurantDTO restaurantDTO) throws BadRequestException {
         try {
             Restaurants restaurants = new Restaurants();
-            restaurants.setName(restaurants.getName());
+            restaurants.setName(restaurantDTO.getName());
             restaurants.setLocation(restaurantDTO.getLocation());
             restaurants.setCuisine(restaurantDTO.getCuisine());
 
